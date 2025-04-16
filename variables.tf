@@ -1,3 +1,6 @@
+# ===========================================================================
+# Input Variables
+# ===========================================================================
 variable "aws_region" {
   description = "AWS region for deployment"
   type        = string
@@ -32,7 +35,6 @@ variable "app_image" {
   description = "ECR image URL for the s3-failure-flags-app"
   type        = string
   default     = "jsabo/s3-failure-flags-app:latest"
-  #default     = "<YOUR_ECR_REPO>/s3-failure-flags-app:latest"
 }
 
 variable "gremlin_sidecar_image" {
@@ -47,9 +49,8 @@ variable "container_port" {
   default     = 8080
 }
 
-# Additional environment variables for the application container.
 variable "app_environment" {
-  description = "Additional environment variables for the app container"
+  description = "Environment variables for the application container"
   type        = map(string)
   default = {
     S3_BUCKET             = "commoncrawl"
@@ -58,23 +59,20 @@ variable "app_environment" {
   }
 }
 
-##############################################################################
-# File paths for Gremlin sensitive credentials
-##############################################################################
 variable "gremlin_team_id_path" {
-  description = "Path to the file that contains the Gremlin Team ID."
+  description = "Path to the file with the Gremlin Team ID"
   type        = string
   default     = "gremlin_team_id.txt"
 }
 
 variable "gremlin_team_certificate_path" {
-  description = "Path to the file that contains the Gremlin Team Certificate."
+  description = "Path to the file with the Gremlin Team certificate"
   type        = string
   default     = "gremlin_team_certificate.pem"
 }
 
 variable "gremlin_team_private_key_path" {
-  description = "Path to the file that contains the Gremlin Team Private Key."
+  description = "Path to the file with the Gremlin Team private key"
   type        = string
   default     = "gremlin_team_private_key.pem"
 }

@@ -1,4 +1,10 @@
-# VPC
+# ===========================================================================
+# Networking Resources
+#   • VPC & Subnets
+#   • Internet Gateway & Route Tables
+#   • Security Groups
+#   • Application Load Balancer, Target Group, Listener
+# ===========================================================================
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -9,12 +15,10 @@ resource "aws_vpc" "main" {
   }
 }
 
-# Data source for availability zones
 data "aws_availability_zones" "available" {
   state = "available"
 }
 
-# Public Subnets
 resource "aws_subnet" "public" {
   count                   = length(var.public_subnet_cidrs)
   vpc_id                  = aws_vpc.main.id
@@ -27,7 +31,6 @@ resource "aws_subnet" "public" {
   }
 }
 
-# Internet Gateway
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
 
@@ -36,7 +39,6 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# Public Route Table
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -50,17 +52,15 @@ resource "aws_route_table" "public" {
   }
 }
 
-# Associate public subnets with the public route table
 resource "aws_route_table_association" "public" {
   count          = length(var.public_subnet_cidrs)
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
 }
 
-# Security Group for ALB
 resource "aws_security_group" "alb_sg" {
   name        = "alb-sg"
-  description = "Security group for ALB"
+  description = "ALB security group"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -69,6 +69,7 @@ resource "aws_security_group" "alb_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -81,10 +82,9 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-# Security Group for ECS tasks
 resource "aws_security_group" "ecs_sg" {
   name        = "ecs-sg"
-  description = "Security group for ECS tasks"
+  description = "ECS tasks security group"
   vpc_id      = aws_vpc.main.id
 
   ingress {
@@ -93,6 +93,7 @@ resource "aws_security_group" "ecs_sg" {
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id]
   }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -105,26 +106,23 @@ resource "aws_security_group" "ecs_sg" {
   }
 }
 
-# Application Load Balancer
 resource "aws_lb" "app_lb" {
   name               = "s3-failure-flags-alb"
-  internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb_sg.id]
   subnets            = aws_subnet.public[*].id
+  security_groups    = [aws_security_group.alb_sg.id]
 
   tags = {
     Name = "s3-failure-flags-alb"
   }
 }
 
-# Target Group for ALB (for the app container)
 resource "aws_lb_target_group" "ecs_tg" {
   name        = "s3-failure-flags-tg"
   port        = var.container_port
   protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
   target_type = "ip"
+  vpc_id      = aws_vpc.main.id
 
   health_check {
     path                = "/liveness"
@@ -137,7 +135,6 @@ resource "aws_lb_target_group" "ecs_tg" {
   }
 }
 
-# ALB Listener
 resource "aws_lb_listener" "app_lb_listener" {
   load_balancer_arn = aws_lb.app_lb.arn
   port              = "80"
