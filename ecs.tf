@@ -50,7 +50,7 @@ resource "aws_ecs_task_definition" "s3_failure_flags_task" {
       environment = [
         { name = "GREMLIN_SIDECAR_ENABLED", value = "true" },
         { name = "GREMLIN_DEBUG", value = "true" },
-        { name = "SERVICE_NAME", value = "s3-failure-flags-app" },
+        { name = "SERVICE_NAME", value = "s3-failure-flags-task" },
         { name = "GREMLIN_TEAM_ID", value = data.local_file.gremlin_team_id.content },
         { name = "GREMLIN_TEAM_CERTIFICATE", value = data.local_sensitive_file.gremlin_team_certificate.content },
         { name = "GREMLIN_TEAM_PRIVATE_KEY", value = data.local_sensitive_file.gremlin_team_private_key.content }
